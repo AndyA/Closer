@@ -1,21 +1,38 @@
-CC =  gcc
+.PHONY: all clean dist install tags
+
+INCLUDES=-I/opt/local/include
+LIBS=-L/opt/local/lib -lpthread
 # Use OPTIMIZE="-g3" for debug build
 # Use OPTIMIZE="-fprofile-arcs -ftest-coverage" for gcov build
 OPTIMIZE=-O3
 DEFINES=-DTHREADED_CLOSURES
-CFLAGS = $(DEFINES) $(OPTIMIZE) -W -Wall -I/usr/local/include -L/usr/local/lib -I/opt/local/include -L/opt/local/lib
+LDFLAGS=$(LIBS)
+CPPFLAGS=-Wall $(INCLUDES) $(OPTIMIZE) $(DEFINES)
+OBJS=closure.o
+PROG=closure
+INSTALL_PREFIX=/usr/local
 
-all: closure
+all: $(PROG)
 
-closure.o: closure.h
+$(PROG): $(OBJS)
 
-closure: closure.o
-	$(CC) $(CFLAGS) $< -o $@
+clean:
+	rm -rf $(OBJS) $(PROG) *.dSYM $(PROG)-*.tar.gz \
+		tags *.gcda *.gcno *.gcov *.out
 
-clean:  
-	rm -f *.o tags *.gcda *.gcno *.gcov *.o *.out
+dist:
+	VERSION=$$(perl -ne '/^#define\s+VERSION\s+\"(.+?)\"/ \
+		&& print $$1' $(PROG).c) && \
+		DIR=$(PROG)-$$VERSION && \
+		mkdir $$DIR && \
+		cp *.c Makefile $$DIR && \
+		tar zcf $$DIR.tar.gz $$DIR && \
+		rm -rf $$DIR
 
-.PHONY: tags
+install: $(PROG)
+	mkdir -p $(INSTALL_PREFIX)/bin
+	cp $(PROG) $(INSTALL_PREFIX)/bin
+
 tags:
 	ctags *.c *.h
 
