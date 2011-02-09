@@ -1,5 +1,9 @@
 Implement 'self' context arg which points to the closure itself.
 
+Dynamically generate thunk code on supported architectures.
+
+  http://androidbutnotparanoid.blogspot.com/2009/05/dynamically-generating-and-executing.html
+
 Think About
 ===========
 
