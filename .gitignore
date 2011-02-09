@@ -5,5 +5,5 @@
 *.out
 .*.swp
 Session.vim
-closure
+closer
 tags

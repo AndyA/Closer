@@ -1,7 +1,7 @@
 /* BASENAME.c */
 
 /* <skip> */
-#include "closure.h"
+#include "closer.h"
 /* </skip> */
 /* <include block="INCLUDE_HEADER" /> */
 

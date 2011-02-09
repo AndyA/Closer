@@ -6,9 +6,9 @@ use warnings;
 use Getopt::Long;
 
 GetOptions() or die "Bad options\n";
-die "Usage: closure.pl <specfile.cl>\n" unless @ARGV == 1;
+die "Usage: closer.pl <specfile.cl>\n" unless @ARGV == 1;
 my $spec = parse_spec_file( $ARGV[0] );
-my %tpl = ( c => 'tools/closure.c', h => 'tools/closure.h', );
+my %tpl = ( c => 'closer.c', h => 'closer.h', );
 
 while ( my ( $ext, $tpl ) = each %tpl ) {
   my $name = $spec->{name} . '.' . $ext;
