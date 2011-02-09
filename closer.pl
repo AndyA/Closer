@@ -163,14 +163,14 @@ sub parse_spec {
   my $spec = {};
   while ( defined( my $line = <$fh> ) ) {
     chomp $line;
-    next if $line =~ /^\s*$/;
-    next if $line =~ /^\s*#/;
+    next if $line =~ m{^\s*$};
+    next if $line =~ m{^\s*//};
     if ( $line =~ /^(\w+)\s*[:=]\s*(.*)/ ) {
       my ( $k, $v ) = ( $1, $2 );
       $v =~ s/\s+$//;
       $spec->{$k} = $v;
     }
-    elsif ( $line =~ /^(.*?)\s+(\w+)\s*\((.*)\)\s*;\s*$/ ) {
+    elsif ( $line =~ /^(.*?)\s*(\w+)\s*\((.*)\)\s*;\s*$/ ) {
       my ( $ret, $name, $args ) = ( $1, $2, $3 );
       $spec->{name}   = $name;
       $spec->{return} = $ret;
