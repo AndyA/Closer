@@ -10,7 +10,7 @@ foo.cls:
 
   // Parameters marked 'context' are supplied when the closure is
   // created and persist across calls to it. Other parameters must be
-  // supplied when the closure is created.
+  // supplied when the closure is called.
 
   int foo( context const char *msg, int x );
 
