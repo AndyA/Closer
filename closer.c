@@ -14,6 +14,7 @@
 
 struct closure_slot {
   unsigned next;
+  unsigned refcount;
   NAME cl;
    RETURN( *code ) ( ALL_PROTO );
   void ( *cleanup ) ( CTX_PROTO );
@@ -36,8 +37,8 @@ static RETURN closure_1( PASS_PROTO );
 
 static struct closure_slot slot[SLOTS] = {
 /* <skip> */
-  {1, closure_0, NULL, NULL},
-  {2, closure_1, NULL, NULL},
+  {1, 0, closure_0, NULL, NULL},
+  {2, 0, closure_1, NULL, NULL},
 /* </skip> */
 /* <include block="CLOSURE_TABLE" /> */
 };
@@ -54,10 +55,12 @@ pthread_cond_t try_again = PTHREAD_COND_INITIALIZER;
 #define new_closure_cleanup new_NAME_cleanup_nts
 #define new_closure         new_NAME_nts
 #define free_closure        free_NAME_nts
+#define clone_closure       clone_NAME_nts
 #else
 #define new_closure_cleanup new_NAME_cleanup
 #define new_closure         new_NAME
 #define free_closure        free_NAME
+#define clone_closure       clone_NAME
 #endif
 
 /* <skip> */
@@ -83,6 +86,7 @@ new_closure_cleanup( RETURN( *code ) ( ALL_PROTO ), CTX_PROTO,
   s = free_slot;
   free_slot = slot[s].next;
   slot[s].next = SLOTS + 1;
+  slot[s].refcount = 1;
   slot[s].code = code;
   slot[s].cleanup = cleanup;
   CTX_COPY_STMT;
@@ -133,19 +137,30 @@ bad_free( void ) {
 void
 free_closure( NAME cl ) {
   unsigned i = lookup_closure( cl );
-  if ( i == UINT_MAX ) {
+  if ( i == UINT_MAX || slot[i].next != SLOTS + 1 ) {
     bad_free(  );
     return;
   }
 
-  if ( slot[i].next != SLOTS + 1 )
-    bad_free(  );
-  if ( slot[i].cleanup ) {
-    slot[i].cleanup( CLEANUP_ARGS );
-    slot[i].cleanup = NULL;
+  if ( --slot[i].refcount == 0 ) {
+    if ( slot[i].cleanup ) {
+      slot[i].cleanup( CLEANUP_ARGS );
+      slot[i].cleanup = NULL;
+    }
+    slot[i].next = free_slot;
+    free_slot = i;
   }
-  slot[i].next = free_slot;
-  free_slot = i;
+}
+
+NAME
+clone_closure( NAME cl ) {
+  unsigned i = lookup_closure( cl );
+  if ( i == UINT_MAX || slot[i].next != SLOTS + 1 ) {
+    fprintf( stderr, "Address is not a valid closure" );
+    exit( 1 );
+  }
+  slot[i].refcount++;
+  return cl;
 }
 
 #if defined( THREADED_CLOSURES ) || defined( THREADED_NAME )

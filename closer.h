@@ -26,6 +26,7 @@ NAME new_NAME_cleanup( RETURN( *code ) ( ALL_PROTO ), CTX_PROTO,
                        void ( *cleanup ) ( CTX_PROTO ) );
 NAME new_NAME( RETURN( *code ) ( ALL_PROTO ), CTX_PROTO );
 void free_NAME( NAME cl );
+NAME clone_NAME( NAME cl );
 
 #if defined( THREADED_CLOSURES ) || defined( THREADED_NAME )
 

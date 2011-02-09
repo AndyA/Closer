@@ -1,15 +1,4 @@
-Implement reference counting:
-
-  foo1 = new_foo_closure(...);
-  foo2 = clone_foo( foo1 ); /* actually returns foo1 so foo1 == foo2 */
-  free_foo(foo1);           /* ref count back to 1 */
-  free_foo(foo2);           /* actually freed */
-
 Implement 'self' context arg which points to the closure itself.
-
-Build a closure address -> closure number index so we don't depend on
-the closure addresses being in ascending order. Will also be useful to
-be able to look up the closure to e.g. access it's curried args.
 
 Think About
 ===========

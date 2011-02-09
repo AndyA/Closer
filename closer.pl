@@ -99,7 +99,7 @@ sub make_vars {
     },
     CLOSURE_TABLE => sub {
       join ",\n",
-       map { "  {" . ( $_ + 1 ) . ", closure_$_, NULL, NULL}" }
+       map { "  {" . ( $_ + 1 ) . ", 0, closure_$_, NULL, NULL}" }
        0 .. $spec->{slots} - 1;
     },
     CLOSURE_DEFINITIONS => sub {
