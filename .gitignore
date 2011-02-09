@@ -4,6 +4,7 @@
 *.o
 *.out
 .*.swp
+.gdb_history
 Session.vim
 closer
 tags
