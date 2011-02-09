@@ -7,4 +7,12 @@ Implement reference counting:
 
 Implement 'self' context arg which points to the closure itself.
 
+Build a closure address -> closure number index so we don't depend on
+the closure addresses being in ascending order. Will also be useful to
+be able to look up the closure to e.g. access it's curried args.
+
+Think About
+===========
+
+Suicidal / one-shot closures.
 
