@@ -128,20 +128,19 @@ lookup_closure( NAME cl ) {
   return ix ? ix->idx : UINT_MAX;
 }
 
-static void
-bad_free( void ) {
-  fprintf( stderr, "Attempt to free unallocated closure" );
-  exit( 1 );
+static unsigned
+lookup_active_closure( NAME cl ) {
+  unsigned i = lookup_closure( cl );
+  if ( i == UINT_MAX || slot[i].next != SLOTS + 1 ) {
+    fprintf( stderr, "Address is not a valid closure" );
+    exit( 1 );
+  }
+  return i;
 }
 
 void
 free_closure( NAME cl ) {
-  unsigned i = lookup_closure( cl );
-  if ( i == UINT_MAX || slot[i].next != SLOTS + 1 ) {
-    bad_free(  );
-    return;
-  }
-
+  unsigned i = lookup_active_closure( cl );
   if ( --slot[i].refcount == 0 ) {
     if ( slot[i].cleanup ) {
       slot[i].cleanup( CLEANUP_ARGS );
@@ -154,11 +153,7 @@ free_closure( NAME cl ) {
 
 NAME
 clone_closure( NAME cl ) {
-  unsigned i = lookup_closure( cl );
-  if ( i == UINT_MAX || slot[i].next != SLOTS + 1 ) {
-    fprintf( stderr, "Address is not a valid closure" );
-    exit( 1 );
-  }
+  unsigned i = lookup_active_closure( cl );
   slot[i].refcount++;
   return cl;
 }
