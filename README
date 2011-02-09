@@ -1,0 +1,53 @@
+Closer: Something like closures in C
+====================================
+
+Synopsis:
+
+foo.cls:
+
+  // Max 10 closures at a time
+  slots = 10
+
+  // Parameters marked 'context' are supplied when the closure is
+  // created and persist across calls to it. Other parameters must be
+  // supplied when the closure is created.
+
+  int foo( context const char *msg, int x );
+
+prog.c:
+
+  #include "foo.h" /* we generated this and foo.c with closer.pl */
+
+  static int
+  printme( const char *msg, int x ) {
+    printf( msg, x );
+    printf( "\n" );
+  }
+
+  int main(void) {
+    // Some closures. We'd get NULL if we used all the slots. We supply
+    // values for any context parameters here.
+    foo f1 = new_foo( "hello %d" );
+    foo f2 = new_foo( "goodbye %d" );
+
+    // Closures are reference counted so f3 == f1 after cloning
+    foo f3 = clone_foo( f1 );
+
+    // Now call the closures supplying any non-context parameters
+    f1( 1 ); // "hello 1"
+    f1( 2 ); // "hello 2"
+
+    f2( 3 ); // "goodbye 3"
+    f2( 4 ); // "goodbye 4"
+
+    // Call the clone of f1 (which actually /is/ f1)
+    f3( 5 ); // "hello 5"
+
+    free_foo( f1 );   // decrement reference count
+    free_foo( f2 );   // free it
+    free_foo( f3 );   // free it
+
+    return 0;
+  }
+
+Copyright Andy Armstrong, andy@hexten.net, 2011
