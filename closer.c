@@ -329,8 +329,7 @@ test_exhaustion( const char *s ) {
     cl[i] = new_NAME( printer, buf );
     not_null( cl[i], "%s: closure %d allocated", s, i + 1 );
   }
-  null( new_NAME( printer, "failure %d" ), "%s: all closures allocated",
-        s );
+  null( new_NAME( printer, "failure %d" ), "%s: all allocated", s );
   for ( i = 0; i < sizeof( cl ) / sizeof( cl[0] ); i++ ) {
     free_NAME( cl[i] );
   }
