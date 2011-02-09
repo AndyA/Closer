@@ -2,6 +2,7 @@
 
 /* <skip> */
 #include "closer.h"
+#include "tap.h"
 /* </skip> */
 /* <include block="INCLUDE_HEADER" /> */
 
@@ -210,7 +211,6 @@ new_NAME_nb( RETURN( *code ) ( ALL_PROTO ), CTX_PROTO,
   NAME cl;
   pthread_mutex_lock( &lock );
   if ( free_slot == SLOTS ) {
-    /* TODO do something other than wait forever if the timeout != 0 */
     if ( timeout == 0 ) {
       pthread_mutex_unlock( &lock );
       return NULL;
@@ -248,21 +248,25 @@ new_NAME_nb( RETURN( *code ) ( ALL_PROTO ), CTX_PROTO,
 
 static RETURN
 printer( ALL_PROTO ) {
-  printf( ( char * ) h, x );
-  printf( "\n" );
+  diag( ( char * ) h, x );
   return x * 2;
 }
 
 static void
 cleanup( CTX_PROTO ) {
-  printf( "cleaning up %s\n", ( char * ) h );
+  diag( "cleaning up %s\n", ( char * ) h );
 }
 
 int
 main( void ) {
+  plan( 4 );
   NAME cl1 = new_NAME_cleanup( printer, ( void * ) "hello %d", cleanup );
+  not_null( cl1, "cl1 - non null" );
   NAME cl2 = new_NAME( printer, ( void * ) "world %d" );
+  not_null( cl2, "cl2 - non null" );
   NAME cl3 = clone_NAME( cl1 );
+  not_null( cl3, "cl3 - non null" );
+  ok( cl1 == cl3, "clone is alias" );
   cl1( 1 );
   cl1( 2 );
   cl2( 3 );
@@ -276,6 +280,7 @@ main( void ) {
   cl3( 1 );
   cl3( 2 );
   free_NAME( cl3 );
+  free_NAME( cl2 );
   return 0;
 }
 
