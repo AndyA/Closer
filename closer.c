@@ -32,6 +32,8 @@ struct closure_index {
 /* <skip> */
 static RETURN closure_0( PASS_PROTO );
 static RETURN closure_1( PASS_PROTO );
+static RETURN closure_2( PASS_PROTO );
+static RETURN closure_3( PASS_PROTO );
 /* </skip> */
 /* <include block="CLOSURE_PROTOTYPES" /> */
 
@@ -39,6 +41,8 @@ static struct closure_slot slot[SLOTS] = {
 /* <skip> */
   {1, 0, closure_0, NULL, NULL},
   {2, 0, closure_1, NULL, NULL},
+  {3, 0, closure_2, NULL, NULL},
+  {4, 0, closure_3, NULL, NULL},
 /* </skip> */
 /* <include block="CLOSURE_TABLE" /> */
 };
@@ -72,6 +76,16 @@ closure_0( PASS_PROTO ) {
 static RETURN
 closure_1( PASS_PROTO ) {
   return slot[1].code( CALL_ARGS( 1 ) );
+}
+
+static RETURN
+closure_2( PASS_PROTO ) {
+  return slot[2].code( CALL_ARGS( 2 ) );
+}
+
+static RETURN
+closure_3( PASS_PROTO ) {
+  return slot[3].code( CALL_ARGS( 3 ) );
 }
 
 /* </skip> */
@@ -248,6 +262,7 @@ int
 main( void ) {
   NAME cl1 = new_NAME_cleanup( printer, ( void * ) "hello %d", cleanup );
   NAME cl2 = new_NAME( printer, ( void * ) "world %d" );
+  NAME cl3 = clone_NAME( cl1 );
   cl1( 1 );
   cl1( 2 );
   cl2( 3 );
@@ -258,6 +273,9 @@ main( void ) {
   cl1( 2 );
   cl2( 3 );
   cl2( 4 );
+  cl3( 1 );
+  cl3( 2 );
+  free_NAME( cl3 );
   return 0;
 }
 

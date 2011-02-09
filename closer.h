@@ -17,7 +17,7 @@
 #define PASS_PROTO      int x
 #define CALL_ARGS(n)    x, data[n].h
 #define RETURN          int
-#define NSLOTS          2
+#define NSLOTS          4
 /* </skip> */
 
 typedef RETURN( *NAME ) ( PASS_PROTO );
