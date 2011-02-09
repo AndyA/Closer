@@ -23,6 +23,11 @@ struct closure_data {
   CTX_PROTO_STMT;
 };
 
+struct closure_index {
+  unsigned long long addr;      /* ordered */
+  unsigned idx;                 /* index into closure_data, closure_slot */
+};
+
 /* <skip> */
 static RETURN closure_0( PASS_PROTO );
 static RETURN closure_1( PASS_PROTO );
@@ -38,9 +43,10 @@ static struct closure_slot slot[SLOTS] = {
 };
 
 static struct closure_data data[SLOTS];
+static struct closure_index index[SLOTS];
 
 static unsigned free_slot = 0;
-static unsigned order_known = 0;
+static unsigned indexed = 0;
 
 #if defined( THREADED_CLOSURES ) || defined( THREADED_NAME )
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
@@ -89,17 +95,33 @@ new_closure( RETURN( *code ) ( ALL_PROTO ), CTX_PROTO ) {
   return new_NAME_cleanup( code, CTX_ARGS, NULL );
 }
 
-static unsigned
-are_ordered( void ) {
-  unsigned long long last_cl = 0;
+static int
+by_addr( const void *a, const void *b ) {
+  const struct closure_index *cia = ( const struct closure_index * ) a;
+  const struct closure_index *cib = ( const struct closure_index * ) b;
+  return cia->addr < cib->addr ? -1 : cia->addr > cib->addr ? 1 : 0;
+}
+
+static void
+build_index( void ) {
   unsigned i;
   for ( i = 0; i < SLOTS; i++ ) {
-    unsigned long long cl = ( unsigned long long ) slot[i].cl;
-    if ( cl < last_cl )
-      return 2;
-    last_cl = cl;
+    index[i].addr = ( unsigned long long ) slot[i].cl;
+    index[i].idx = i;
   }
-  return 1;
+  qsort( index, SLOTS, sizeof( index[0] ), by_addr );
+}
+
+static unsigned
+lookup_closure( NAME cl ) {
+  if ( !indexed ) {
+    build_index(  );
+    indexed++;
+  }
+  struct closure_index key = { ( unsigned long long ) cl, 0 };
+  struct closure_index *ix =
+      bsearch( &key, index, SLOTS, sizeof( index[0] ), by_addr );
+  return ix ? ix->idx : UINT_MAX;
 }
 
 static void
@@ -108,45 +130,14 @@ bad_free( void ) {
   exit( 1 );
 }
 
-static int
-by_addr( const void *a, const void *b ) {
-  const struct closure_slot *csa = ( const struct closure_slot * ) a;
-  const struct closure_slot *csb = ( const struct closure_slot * ) b;
-  unsigned long long cla = ( unsigned long long ) csa->cl;
-  unsigned long long clb = ( unsigned long long ) csb->cl;
-  return cla < clb ? -1 : cla > clb ? 1 : 0;
-}
-
 void
 free_closure( NAME cl ) {
-  unsigned i;
-
-  if ( !order_known )
-    order_known = are_ordered(  );
-
-  if ( order_known == 1 ) {
-    struct closure_slot key = {
-      0, cl, NULL, NULL
-    };
-    struct closure_slot *sl =
-        bsearch( &key, slot, SLOTS, sizeof( struct closure_slot ),
-                 by_addr );
-    if ( sl ) {
-      i = sl - slot;
-      goto free_it;
-    }
-  }
-  else if ( order_known == 2 ) {
-    for ( i = 0; i < SLOTS; i++ ) {
-      if ( slot[i].cl == cl ) {
-        goto free_it;
-      }
-    }
+  unsigned i = lookup_closure( cl );
+  if ( i == UINT_MAX ) {
+    bad_free(  );
+    return;
   }
 
-  bad_free(  );
-
-free_it:
   if ( slot[i].next != SLOTS + 1 )
     bad_free(  );
   if ( slot[i].cleanup ) {
