@@ -156,14 +156,16 @@ lookup_active_closure( NAME cl ) {
 
 void
 free_closure( NAME cl ) {
-  unsigned i = lookup_active_closure( cl );
-  if ( --slot[i].refcount == 0 ) {
-    if ( slot[i].cleanup ) {
-      slot[i].cleanup( CLEANUP_ARGS );
-      slot[i].cleanup = NULL;
+  if ( cl ) {
+    unsigned i = lookup_active_closure( cl );
+    if ( --slot[i].refcount == 0 ) {
+      if ( slot[i].cleanup ) {
+        slot[i].cleanup( CLEANUP_ARGS );
+        slot[i].cleanup = NULL;
+      }
+      slot[i].next = free_slot;
+      free_slot = i;
     }
-    slot[i].next = free_slot;
-    free_slot = i;
   }
 }
 
