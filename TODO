@@ -1,0 +1,10 @@
+Implement reference counting:
+
+  foo1 = new_foo_closure(...);
+  foo2 = clone_foo( foo1 ); /* actually returns foo1 so foo1 == foo2 */
+  free_foo(foo1);           /* ref count back to 1 */
+  free_foo(foo2);           /* actually freed */
+
+Implement 'self' context arg which points to the closure itself.
+
+
