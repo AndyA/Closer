@@ -39,7 +39,7 @@ static RETURN closure_3( PASS_PROTO );
 /* </skip> */
 /* <include block="CLOSURE_PROTOTYPES" /> */
 
-static struct closure_slot slot[SLOTS] = {
+static struct closure_slot cl_slot[SLOTS] = {
 /* <skip> */
   {1, 0, closure_0, NULL, NULL},
   {2, 0, closure_1, NULL, NULL},
@@ -49,7 +49,7 @@ static struct closure_slot slot[SLOTS] = {
 /* <include block="CLOSURE_TABLE" /> */
 };
 
-static struct closure_data data[SLOTS];
+static struct closure_data cl_data[SLOTS];
 static struct closure_index cl_index[SLOTS];
 
 static unsigned free_slot = 0;
@@ -72,22 +72,22 @@ pthread_cond_t try_again = PTHREAD_COND_INITIALIZER;
 /* <skip> */
 static RETURN
 closure_0( PASS_PROTO ) {
-  return slot[0].code( CALL_ARGS( 0 ) );
+  return cl_slot[0].code( CALL_ARGS( 0 ) );
 }
 
 static RETURN
 closure_1( PASS_PROTO ) {
-  return slot[1].code( CALL_ARGS( 1 ) );
+  return cl_slot[1].code( CALL_ARGS( 1 ) );
 }
 
 static RETURN
 closure_2( PASS_PROTO ) {
-  return slot[2].code( CALL_ARGS( 2 ) );
+  return cl_slot[2].code( CALL_ARGS( 2 ) );
 }
 
 static RETURN
 closure_3( PASS_PROTO ) {
-  return slot[3].code( CALL_ARGS( 3 ) );
+  return cl_slot[3].code( CALL_ARGS( 3 ) );
 }
 
 /* </skip> */
@@ -100,14 +100,14 @@ new_closure_cleanup( RETURN( *code ) ( ALL_PROTO ), CTX_PROTO,
   if ( free_slot == SLOTS )
     return NULL;
   s = free_slot;
-  free_slot = slot[s].next;
-  slot[s].next = SLOTS + 1;
-  slot[s].refcount = 1;
-  slot[s].code = code;
-  slot[s].cleanup = cleanup;
+  free_slot = cl_slot[s].next;
+  cl_slot[s].next = SLOTS + 1;
+  cl_slot[s].refcount = 1;
+  cl_slot[s].code = code;
+  cl_slot[s].cleanup = cleanup;
   CTX_COPY_STMT;
 
-  return slot[s].cl;
+  return cl_slot[s].cl;
 }
 
 NAME
@@ -126,7 +126,7 @@ static void
 build_index( void ) {
   unsigned i;
   for ( i = 0; i < SLOTS; i++ ) {
-    cl_index[i].addr = ( unsigned long long ) slot[i].cl;
+    cl_index[i].addr = ( unsigned long long ) cl_slot[i].cl;
     cl_index[i].idx = i;
   }
   qsort( cl_index, SLOTS, sizeof( cl_index[0] ), by_addr );
@@ -147,7 +147,7 @@ lookup_closure( NAME cl ) {
 static unsigned
 lookup_active_closure( NAME cl ) {
   unsigned i = lookup_closure( cl );
-  if ( i == UINT_MAX || slot[i].next != SLOTS + 1 ) {
+  if ( i == UINT_MAX || cl_slot[i].next != SLOTS + 1 ) {
     fprintf( stderr, "Address is not a valid closure" );
     exit( 1 );
   }
@@ -158,12 +158,12 @@ void
 free_closure( NAME cl ) {
   if ( cl ) {
     unsigned i = lookup_active_closure( cl );
-    if ( --slot[i].refcount == 0 ) {
-      if ( slot[i].cleanup ) {
-        slot[i].cleanup( CLEANUP_ARGS );
-        slot[i].cleanup = NULL;
+    if ( --cl_slot[i].refcount == 0 ) {
+      if ( cl_slot[i].cleanup ) {
+        cl_slot[i].cleanup( CLEANUP_ARGS );
+        cl_slot[i].cleanup = NULL;
       }
-      slot[i].next = free_slot;
+      cl_slot[i].next = free_slot;
       free_slot = i;
     }
   }
@@ -172,7 +172,7 @@ free_closure( NAME cl ) {
 NAME
 clone_closure( NAME cl ) {
   unsigned i = lookup_active_closure( cl );
-  slot[i].refcount++;
+  cl_slot[i].refcount++;
   return cl;
 }
 

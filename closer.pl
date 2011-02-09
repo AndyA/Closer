@@ -56,7 +56,7 @@ sub make_vars {
   my $call_args = sub {
     my $slot = shift;
     join ', ',
-     map { $_->{is_context} ? "data[$slot].$_->{name}" : $_->{name} }
+     map { $_->{is_context} ? "cl_data[$slot].$_->{name}" : $_->{name} }
      @{ $spec->{args} };
   };
   return {
@@ -70,11 +70,11 @@ sub make_vars {
        grep { $_->{is_context} } @{ $spec->{args} };
     },
     CLEANUP_ARGS => sub {
-      join ', ', map { "data[i].$_" } map { $_->{name} }
+      join ', ', map { "cl_data[i].$_" } map { $_->{name} }
        grep { $_->{is_context} } @{ $spec->{args} };
     },
     CTX_COPY_STMT => sub {
-      join ";\n", map { "data[s].$_ = $_" }
+      join ";\n", map { "cl_data[s].$_ = $_" }
        map  { $_->{name} }
        grep { $_->{is_context} } @{ $spec->{args} };
     },
@@ -104,7 +104,7 @@ sub make_vars {
     },
     CLOSURE_DEFINITIONS => sub {
       map {
-        "static RETURN closure_$_( PASS_PROTO ) { return slot[$_].code( "
+        "static RETURN closure_$_( PASS_PROTO ) { return cl_slot[$_].code( "
          . $call_args->( $_ ) . " ); }"
       } 0 .. $spec->{slots} - 1;
     },

@@ -10,12 +10,12 @@
 /* <skip> */
 #define ALL_PROTO       int x, const char *h
 #define CTX_ARGS        h
-#define CLEANUP_ARGS    data[i].h
+#define CLEANUP_ARGS    cl_data[i].h
 #define CTX_PROTO       const char *h
 #define CTX_PROTO_STMT  const char *h
-#define CTX_COPY_STMT   data[s].h = h
+#define CTX_COPY_STMT   cl_data[s].h = h
 #define PASS_PROTO      int x
-#define CALL_ARGS(n)    x, data[n].h
+#define CALL_ARGS(n)    x, cl_data[n].h
 #define RETURN          int
 #define NSLOTS          4
 /* </skip> */
