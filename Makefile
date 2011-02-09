@@ -18,7 +18,7 @@ $(PROG): $(OBJS)
 
 clean:
 	rm -rf $(OBJS) $(PROG) *.dSYM $(PROG)-*.tar.gz \
-		tags *.gcda *.gcno *.gcov *.out
+		tags perltags *.gcda *.gcno *.gcov *.out
 
 dist:
 	VERSION=$$(perl -ne '/^#define\s+VERSION\s+\"(.+?)\"/ \
@@ -35,6 +35,7 @@ install: $(PROG)
 
 tags:
 	ctags *.c *.h
+	ptags --sort *.pl > perltags
 
 test: all
 	prove t/*.t
