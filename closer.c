@@ -52,12 +52,12 @@ static struct closure_slot cl_slot[SLOTS] = {
 static struct closure_data cl_data[SLOTS];
 static struct closure_index cl_index[SLOTS];
 
-static unsigned free_slot = 0;
-static unsigned indexed = 0;
+static unsigned cl_free_slot = 0;
+static unsigned cl_indexed = 0;
 
 #if defined( THREADED_CLOSURES ) || defined( THREADED_NAME )
-pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t try_again = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t cl_lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cl_try_again = PTHREAD_COND_INITIALIZER;
 #define new_closure_cleanup new_NAME_cleanup_nts
 #define new_closure         new_NAME_nts
 #define free_closure        free_NAME_nts
@@ -97,10 +97,10 @@ NAME
 new_closure_cleanup( RETURN( *code ) ( ALL_PROTO ), CTX_PROTO,
                      void ( *cleanup ) ( CTX_PROTO ) ) {
   unsigned s;
-  if ( free_slot == SLOTS )
+  if ( cl_free_slot == SLOTS )
     return NULL;
-  s = free_slot;
-  free_slot = cl_slot[s].next;
+  s = cl_free_slot;
+  cl_free_slot = cl_slot[s].next;
   cl_slot[s].next = SLOTS + 1;
   cl_slot[s].refcount = 1;
   cl_slot[s].code = code;
@@ -134,9 +134,9 @@ build_index( void ) {
 
 static unsigned
 lookup_closure( NAME cl ) {
-  if ( !indexed ) {
+  if ( !cl_indexed ) {
     build_index(  );
-    indexed++;
+    cl_indexed++;
   }
   struct closure_index key = { ( unsigned long long ) cl, 0 };
   struct closure_index *ix =
@@ -163,8 +163,8 @@ free_closure( NAME cl ) {
         cl_slot[i].cleanup( CLEANUP_ARGS );
         cl_slot[i].cleanup = NULL;
       }
-      cl_slot[i].next = free_slot;
-      free_slot = i;
+      cl_slot[i].next = cl_free_slot;
+      cl_free_slot = i;
     }
   }
 }
@@ -190,10 +190,10 @@ new_NAME( RETURN( *code ) ( ALL_PROTO ), CTX_PROTO ) {
 
 void
 free_NAME( NAME cl ) {
-  pthread_mutex_lock( &lock );
+  pthread_mutex_lock( &cl_lock );
   free_closure( cl );
-  pthread_mutex_unlock( &lock );
-  pthread_cond_signal( &try_again );
+  pthread_mutex_unlock( &cl_lock );
+  pthread_cond_signal( &cl_try_again );
 }
 
 NAME
@@ -202,9 +202,9 @@ clone_NAME( NAME cl ) {
   /* TODO this is a bigger lock than we need; we're only changing a
    * single closure. 
    */
-  pthread_mutex_lock( &lock );
+  pthread_mutex_lock( &cl_lock );
   cl2 = clone_closure( cl );
-  pthread_mutex_unlock( &lock );
+  pthread_mutex_unlock( &cl_lock );
   return cl2;
 }
 
@@ -212,14 +212,14 @@ NAME
 new_NAME_nb( RETURN( *code ) ( ALL_PROTO ), CTX_PROTO,
              void ( *cleanup ) ( CTX_PROTO ), unsigned timeout ) {
   NAME cl;
-  pthread_mutex_lock( &lock );
-  if ( free_slot == SLOTS ) {
+  pthread_mutex_lock( &cl_lock );
+  if ( cl_free_slot == SLOTS ) {
     if ( timeout == 0 ) {
-      pthread_mutex_unlock( &lock );
+      pthread_mutex_unlock( &cl_lock );
       return NULL;
     }
     else if ( timeout == UINT_MAX ) {
-      pthread_cond_wait( &try_again, &lock );
+      pthread_cond_wait( &cl_try_again, &cl_lock );
     }
     else {
       struct timeval tv;
@@ -234,14 +234,14 @@ new_NAME_nb( RETURN( *code ) ( ALL_PROTO ), CTX_PROTO,
         ts.tv_sec++;
       }
 
-      if ( pthread_cond_timedwait( &try_again, &lock, &ts ) ) {
-        pthread_mutex_unlock( &lock );
+      if ( pthread_cond_timedwait( &cl_try_again, &cl_lock, &ts ) ) {
+        pthread_mutex_unlock( &cl_lock );
         return NULL;
       }
     }
   }
   cl = new_closure_cleanup( code, CTX_ARGS, cleanup );
-  pthread_mutex_unlock( &lock );
+  pthread_mutex_unlock( &cl_lock );
   return cl;
 }
 
