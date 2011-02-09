@@ -277,12 +277,10 @@ static void
 called_cleanup_ok( CTX_PROTO, const char *msg ) {
   ok( last_h != NULL && strcmp( last_h, h ) == 0, "%s", msg );
   last_h = NULL;
-  last_x = 0;
 }
 
-int
-main( void ) {
-  plan( 17 );
+static void
+test_basic( void ) {
   NAME cl1 = new_NAME_cleanup( printer, "hello %d", cleanup );
   not_null( cl1, "cl1 - non null" );
   NAME cl2 = new_NAME( printer, "world %d" );
@@ -317,6 +315,33 @@ main( void ) {
   free_NAME( cl3 );
   called_cleanup_ok( "hello %d", "cleanup (2)" );
   free_NAME( cl2 );
+  free_NAME( cl1 );
+}
+
+static void
+test_exhaustion( const char *s ) {
+  NAME cl[SLOTS];
+  char buf[30];
+  int i;
+
+  for ( i = 0; i < sizeof( cl ) / sizeof( cl[0] ); i++ ) {
+    sprintf( buf, "closure %d %%d", i + 1 );
+    cl[i] = new_NAME( printer, buf );
+    not_null( cl[i], "%s: closure %d allocated", s, i + 1 );
+  }
+  null( new_NAME( printer, "failure %d" ), "%s: all closures allocated",
+        s );
+  for ( i = 0; i < sizeof( cl ) / sizeof( cl[0] ); i++ ) {
+    free_NAME( cl[i] );
+  }
+}
+
+int
+main( void ) {
+  plan( 17 + ( SLOTS + 1 ) * 2 );
+  test_basic(  );
+  test_exhaustion( "pass 1" );
+  test_exhaustion( "pass 2" );
   return 0;
 }
 
