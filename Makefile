@@ -37,4 +37,4 @@ tags:
 	ctags *.c *.h
 
 test: all
-	prove -e '' ./closer
+	prove t/*.t
