@@ -254,7 +254,7 @@ static int last_x = 0;
 
 static RETURN
 printer( ALL_PROTO ) {
-  diag( h, x );
+/*  diag( h, x );*/
   last_h = h;
   last_x = x;
   return x * 2;
@@ -269,7 +269,7 @@ called_printer_ok( ALL_PROTO, const char *msg ) {
 
 static void
 cleanup( CTX_PROTO ) {
-  diag( "cleaning up %s", h );
+/*  diag( "cleaning up %s", h );*/
   last_h = h;
 }
 
