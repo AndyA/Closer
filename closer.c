@@ -179,6 +179,18 @@ free_NAME( NAME cl ) {
 }
 
 NAME
+clone_NAME( NAME cl ) {
+  NAME cl2;
+  /* TODO this is a bigger lock than we need; we're only changing a
+   * single closure. 
+   */
+  pthread_mutex_lock( &lock );
+  cl2 = clone_closure( cl );
+  pthread_mutex_unlock( &lock );
+  return cl2;
+}
+
+NAME
 new_NAME_nb( RETURN( *code ) ( ALL_PROTO ), CTX_PROTO,
              void ( *cleanup ) ( CTX_PROTO ), unsigned timeout ) {
   NAME cl;
