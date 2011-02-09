@@ -8,11 +8,11 @@
 #endif
 
 /* <skip> */
-#define ALL_PROTO       int x, void *h
+#define ALL_PROTO       int x, const char *h
 #define CTX_ARGS        h
 #define CLEANUP_ARGS    data[i].h
-#define CTX_PROTO       void *h
-#define CTX_PROTO_STMT  void *h
+#define CTX_PROTO       const char *h
+#define CTX_PROTO_STMT  const char *h
 #define CTX_COPY_STMT   data[s].h = h
 #define PASS_PROTO      int x
 #define CALL_ARGS(n)    x, data[n].h

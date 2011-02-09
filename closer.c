@@ -7,8 +7,9 @@
 /* <include block="INCLUDE_HEADER" /> */
 
 #include <limits.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/time.h>
 
 #define SLOTS NSLOTS
@@ -27,7 +28,7 @@ struct closure_data {
 
 struct closure_index {
   unsigned long long addr;      /* ordered */
-  unsigned idx;                 /* index into closure_data, closure_slot */
+  unsigned idx;                 /* cl_index into closure_data, closure_slot */
 };
 
 /* <skip> */
@@ -49,7 +50,7 @@ static struct closure_slot slot[SLOTS] = {
 };
 
 static struct closure_data data[SLOTS];
-static struct closure_index index[SLOTS];
+static struct closure_index cl_index[SLOTS];
 
 static unsigned free_slot = 0;
 static unsigned indexed = 0;
@@ -125,10 +126,10 @@ static void
 build_index( void ) {
   unsigned i;
   for ( i = 0; i < SLOTS; i++ ) {
-    index[i].addr = ( unsigned long long ) slot[i].cl;
-    index[i].idx = i;
+    cl_index[i].addr = ( unsigned long long ) slot[i].cl;
+    cl_index[i].idx = i;
   }
-  qsort( index, SLOTS, sizeof( index[0] ), by_addr );
+  qsort( cl_index, SLOTS, sizeof( cl_index[0] ), by_addr );
 }
 
 static unsigned
@@ -139,7 +140,7 @@ lookup_closure( NAME cl ) {
   }
   struct closure_index key = { ( unsigned long long ) cl, 0 };
   struct closure_index *ix =
-      bsearch( &key, index, SLOTS, sizeof( index[0] ), by_addr );
+      bsearch( &key, cl_index, SLOTS, sizeof( cl_index[0] ), by_addr );
   return ix ? ix->idx : UINT_MAX;
 }
 
@@ -246,40 +247,73 @@ new_NAME_nb( RETURN( *code ) ( ALL_PROTO ), CTX_PROTO,
 
 /* <skip> */
 
+static const char *last_h = NULL;
+static int last_x = 0;
+
 static RETURN
 printer( ALL_PROTO ) {
-  diag( ( char * ) h, x );
+  diag( h, x );
+  last_h = h;
+  last_x = x;
   return x * 2;
 }
 
 static void
+called_printer_ok( ALL_PROTO, const char *msg ) {
+  ok( last_h != NULL && strcmp( last_h, h ) == 0, "%s", msg );
+  last_h = NULL;
+  last_x = 0;
+}
+
+static void
 cleanup( CTX_PROTO ) {
-  diag( "cleaning up %s\n", ( char * ) h );
+  diag( "cleaning up %s", h );
+  last_h = h;
+}
+
+static void
+called_cleanup_ok( CTX_PROTO, const char *msg ) {
+  ok( last_h != NULL && strcmp( last_h, h ) == 0, "%s", msg );
+  last_h = NULL;
+  last_x = 0;
 }
 
 int
 main( void ) {
-  plan( 4 );
-  NAME cl1 = new_NAME_cleanup( printer, ( void * ) "hello %d", cleanup );
+  plan( 17 );
+  NAME cl1 = new_NAME_cleanup( printer, "hello %d", cleanup );
   not_null( cl1, "cl1 - non null" );
-  NAME cl2 = new_NAME( printer, ( void * ) "world %d" );
+  NAME cl2 = new_NAME( printer, "world %d" );
   not_null( cl2, "cl2 - non null" );
   NAME cl3 = clone_NAME( cl1 );
   not_null( cl3, "cl3 - non null" );
   ok( cl1 == cl3, "clone is alias" );
   cl1( 1 );
+  called_printer_ok( 1, "hello %d", "cl1(1)" );
   cl1( 2 );
+  called_printer_ok( 2, "hello %d", "cl1(2)" );
   cl2( 3 );
+  called_printer_ok( 3, "world %d", "cl2(3)" );
   cl2( 4 );
+  called_printer_ok( 4, "world %d", "cl2(4)" );
   free_NAME( cl1 );
-  cl1 = new_NAME( printer, ( void * ) "whoop %d" );
+  null( last_h, "ref count decremented, cleanup not called" );
+  cl1 = new_NAME( printer, "whoop %d" );
+  not_null( cl1, "cl1 - non null again" );
   cl1( 1 );
+  called_printer_ok( 1, "whoop %d", "cl1(1)" );
   cl1( 2 );
+  called_printer_ok( 2, "whoop %d", "cl1(2)" );
   cl2( 3 );
+  called_printer_ok( 3, "world %d", "cl2(3)" );
   cl2( 4 );
+  called_printer_ok( 4, "world %d", "cl2(4)" );
   cl3( 1 );
+  called_printer_ok( 1, "hello %d", "cl3(1)" );
   cl3( 2 );
+  called_printer_ok( 2, "hello %d", "cl3(2)" );
   free_NAME( cl3 );
+  called_cleanup_ok( "hello %d", "cleanup (2)" );
   free_NAME( cl2 );
   return 0;
 }
