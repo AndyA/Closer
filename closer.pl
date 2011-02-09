@@ -61,6 +61,7 @@ sub make_vars {
   };
   return {
     NAME      => sub { $spec->{name} },
+    UCNAME    => sub { uc $spec->{name} },
     BASENAME  => sub { $spec->{name} },
     ALL_PROTO => sub {
       join ', ', map { $_->{proto} } @{ $spec->{args} };

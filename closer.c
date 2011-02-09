@@ -28,7 +28,7 @@ struct closure_data {
 
 struct closure_index {
   unsigned long long addr;      /* ordered */
-  unsigned idx;                 /* cl_index into closure_data, closure_slot */
+  unsigned idx;                 /* index into closure_data, closure_slot */
 };
 
 /* <skip> */
@@ -55,7 +55,7 @@ static struct closure_index cl_index[SLOTS];
 static unsigned cl_free_slot = 0;
 static unsigned cl_indexed = 0;
 
-#if defined( THREADED_CLOSURES ) || defined( THREADED_NAME )
+#if defined( THREADED_CLOSURES ) || defined( THREADED_UCNAME )
 pthread_mutex_t cl_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cl_try_again = PTHREAD_COND_INITIALIZER;
 #define new_closure_cleanup new_NAME_cleanup_nts
@@ -176,7 +176,7 @@ clone_closure( NAME cl ) {
   return cl;
 }
 
-#if defined( THREADED_CLOSURES ) || defined( THREADED_NAME )
+#if defined( THREADED_CLOSURES ) || defined( THREADED_UCNAME )
 NAME
 new_NAME_cleanup( RETURN( *code ) ( ALL_PROTO ), CTX_PROTO,
                   void ( *cleanup ) ( CTX_PROTO ) ) {

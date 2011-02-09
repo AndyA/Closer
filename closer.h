@@ -3,7 +3,7 @@
 #ifndef __BASENAME_H
 #define __BASENAME_H
 
-#if defined( THREADED_CLOSURES ) || defined( THREADED_NAME )
+#if defined( THREADED_CLOSURES ) || defined( THREADED_UCNAME )
 #include <pthread.h>
 #endif
 
@@ -28,7 +28,7 @@ NAME new_NAME( RETURN( *code ) ( ALL_PROTO ), CTX_PROTO );
 void free_NAME( NAME cl );
 NAME clone_NAME( NAME cl );
 
-#if defined( THREADED_CLOSURES ) || defined( THREADED_NAME )
+#if defined( THREADED_CLOSURES ) || defined( THREADED_UCNAME )
 
 NAME new_NAME_cleanup_nts( RETURN( *code ) ( ALL_PROTO ), CTX_PROTO,
                            void ( *cleanup ) ( CTX_PROTO ) );
