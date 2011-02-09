@@ -35,7 +35,7 @@ install: $(PROG)
 
 tags:
 	ctags *.c *.h
-	ptags --sort *.pl > perltags
+	which ptags > /dev/null && ptags --sort *.pl > perltags
 
 test: all
 	prove t/*.t
