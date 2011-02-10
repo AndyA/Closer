@@ -46,13 +46,17 @@ asm: thunk_x86_64.s thunk_x86_64.dis thunk_i386.s thunk_i386.dis
 thunk_x86_64.s: thunk.c
 	gcc -arch x86_64 -S -o thunk_x86_64.s thunk.c
 
-thunk_x86_64.dis: thunk.c
+thunk_x86_64.dis thunk_x86_64.hex: thunk.c
 	gcc -arch x86_64 -o thunk_x86_64.o thunk.c
-	otool -t -v thunk_x86_64.o > thunk_x86_64.dis
+	otool -t -v thunk_x86_64.o > thunk_x86_64.asm
+	otool -t thunk_x86_64.o > thunk_x86_64.hex
+	perl tools/hexmix.pl thunk_x86_64.asm thunk_x86_64.hex > thunk_x86_64.dis
 
 thunk_i386.s: thunk.c
 	gcc -arch i386 -S -o thunk_i386.s thunk.c
 
-thunk_i386.dis: thunk.c
+thunk_i386.dis thunk_i386.hex: thunk.c
 	gcc -arch i386 -o thunk_i386.o thunk.c
-	otool -t -v thunk_i386.o > thunk_i386.dis
+	otool -t -v thunk_i386.o > thunk_i386.asm
+	otool -t thunk_i386.o > thunk_i386.hex
+	perl tools/hexmix.pl thunk_i386.asm thunk_i386.hex > thunk_i386.dis
