@@ -9,3 +9,7 @@ Session.vim
 closer
 perltags
 tags
+thunk_i386.dis
+thunk_i386.s
+thunk_x86_64.dis
+thunk_x86_64.s

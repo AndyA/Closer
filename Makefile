@@ -12,13 +12,14 @@ OBJS=closer.o tap.o
 PROG=closer
 INSTALL_PREFIX=/usr/local
 
-all: $(PROG)
+all: $(PROG) asm
 
 $(PROG): $(OBJS)
 
 clean:
 	rm -rf $(OBJS) $(PROG) *.dSYM $(PROG)-*.tar.gz \
-		tags perltags *.gcda *.gcno *.gcov *.out
+		tags perltags *.gcda *.gcno *.gcov *.out \
+		*.s *.dis *.o
 
 dist:
 	VERSION=$$(perl -ne '/^#define\s+VERSION\s+\"(.+?)\"/ \
@@ -39,3 +40,19 @@ tags:
 
 test: all
 	prove t/*.t
+
+asm: thunk_x86_64.s thunk_x86_64.dis thunk_i386.s thunk_i386.dis
+
+thunk_x86_64.s: thunk.c
+	gcc -arch x86_64 -S -o thunk_x86_64.s thunk.c
+
+thunk_x86_64.dis: thunk.c
+	gcc -arch x86_64 -o thunk_x86_64.o thunk.c
+	otool -t -v thunk_x86_64.o > thunk_x86_64.dis
+
+thunk_i386.s: thunk.c
+	gcc -arch i386 -S -o thunk_i386.s thunk.c
+
+thunk_i386.dis: thunk.c
+	gcc -arch i386 -o thunk_i386.o thunk.c
+	otool -t -v thunk_i386.o > thunk_i386.dis
